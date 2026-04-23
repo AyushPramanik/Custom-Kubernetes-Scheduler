@@ -1,4 +1,4 @@
-# custom-k8s-scheduler
+# custom-kubernetes-scheduler
 
 A Kubernetes scheduler written in C++17. Replaces the default `kube-scheduler` for pods that opt in via `schedulerName: custom-scheduler`.
 
@@ -8,53 +8,9 @@ It connects directly to the API server, watches for unscheduled pods, runs them 
 
 ## How it works
 
-```
-API Server
-    │
-    │  watch /api/v1/pods?fieldSelector=status.phase=Pending
-    ▼
-┌─────────────────────────────────────────────────────┐
-│                   Watch Loop                        │
-│                                                     │
-│  1. Drain already-pending pods on startup           │
-│  2. Stream new ADDED / MODIFIED events              │
-│  3. Reconnect with last resourceVersion on timeout  │
-└──────────────────────┬──────────────────────────────┘
-                       │  pod event
-                       ▼
-              ┌────────────────┐
-              │  schedulerName │  ──── not ours? skip
-              │  == ours?      │
-              └───────┬────────┘
-                      │
-                      ▼
-             list_nodes()  (fresh every decision)
-                      │
-                      ▼
-          ┌───────────────────────┐
-          │     Filter Phase      │
-          │                       │
-          │  ① node Ready?        │
-          │  ② not cordoned?      │
-          │  ③ nodeSelector match │
-          │  ④ NoSchedule taints  │
-          │  ⑤ enough CPU + RAM   │
-          └──────────┬────────────┘
-                     │ feasible nodes
-                     ▼
-          ┌───────────────────────┐
-          │     Score Phase       │
-          │                       │
-          │  least-allocated      │
-          │  (free CPU% + RAM%)/2 │
-          └──────────┬────────────┘
-                     │ winner
-                     ▼
-          POST /pods/{name}/binding
-                     │
-                     ▼
-          emit Event → pod scheduled
-```
+<img width="654" height="772" alt="image" src="https://github.com/user-attachments/assets/2911a39d-f5dc-40e4-af13-fb75f561577a" />
+
+
 
 ---
 
